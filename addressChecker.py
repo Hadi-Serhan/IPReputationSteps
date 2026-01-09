@@ -90,5 +90,5 @@ def build_output(code, message, api_object):
     }
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     app()
