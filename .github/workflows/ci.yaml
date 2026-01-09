@@ -25,4 +25,4 @@ jobs:
 
       - name: Run tests with coverage (>= 90%)
         run: |
-          pytest -q --cov=addressChecker --cov-report=term-missing --cov-fail-under=90
+          pytest -q --cov=check_ip --cov-report=term-missing --cov-fail-under=90
