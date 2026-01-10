@@ -4,7 +4,7 @@ import requests
 from typer.testing import CliRunner
 
 
-from addressChecker import app
+from check_ip.main import app
 
 runner = CliRunner()
 
