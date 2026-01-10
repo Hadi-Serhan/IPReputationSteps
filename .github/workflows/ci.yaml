@@ -51,7 +51,7 @@ jobs:
       - name: Build check-ip-batch image
         run: docker build --target check-ip-batch -t check-ip-batch .
 
-      - name: Smoke test check-ip (expected failure: missing key)
+      - name: Smoke test check-ip (expected failure - missing key)
         run: |
           set +e
           out=$(docker run --rm -e IP_ADDRESS="8.8.8.8" check-ip)
@@ -63,7 +63,7 @@ jobs:
           test "$code" -eq 2
           test "$(echo "$out" | jq -r '.step_status.code')" -eq 2
 
-      - name: Smoke test check-ip-batch (expected failure: missing key)
+      - name: Smoke test check-ip-batch (expected failure - missing key)
         run: |
           set +e
           out=$(docker run --rm -e IP_ADDRESSES="8.8.8.8,invalid-ip" check-ip-batch)
