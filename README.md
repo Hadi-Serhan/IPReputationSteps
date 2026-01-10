@@ -184,6 +184,17 @@ Tests validate the end-to-end CLI output (exit codes + JSON structure) while moc
 
 ---
 
+## CI (GitHub Actions)
+
+On every push and pull request, the workflow:
+- Runs the full pytest suite with a **coverage gate (≥90%)**
+- Builds both Docker images (`check-ip` and `check-ip-batch`)
+- Runs lightweight **smoke tests** to confirm the containers start and print valid JSON
+
+Smoke tests intentionally avoid calling the real AbuseIPDB API (no API key is provided). In that case the containers are expected to exit with code `2`, and the workflow still validates that the output is well-formed JSON.
+
+
+
 ## Docker
 
 A single multi-stage `Dockerfile` builds **two images** (one per step) using build targets.
