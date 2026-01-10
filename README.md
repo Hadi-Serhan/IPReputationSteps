@@ -37,7 +37,7 @@ Reads inputs from environment variables, calls the AbuseIPDB `/check` endpoint, 
 ### Step 2 — Batch IP check (`check_ip_batch`)
 Splits and validates a comma-separated list of IPs. For each valid IP it calls AbuseIPDB and returns:
 
-- `summary` (counts + risk buckets)
+- `summary` (counts + risk counts)
 - `results` (map keyed by IP → normalized data)
 - `errors` (invalid IPs and/or per-IP API errors)
 
@@ -191,21 +191,87 @@ On every push and pull request, the workflow:
 - Builds both Docker images (`check-ip` and `check-ip-batch`)
 - Runs lightweight **smoke tests** to confirm the containers start and print valid JSON
 
-Smoke tests intentionally avoid calling the real AbuseIPDB API (no API key is provided). In that case the containers are expected to exit with code `2`, and the workflow still validates that the output is well-formed JSON.
+>The smoke tests run **without an API key** to avoid real network calls, so the containers are expected to exit with code `2`. We use `set +e` / `set -e` so the job can continue while still validating the JSON output.
 
+## CD (Docker image publishing)
+
+We also have a **CD workflow** that publishes Docker images to **Docker Hub** on pushes to `main`.
+
+**What CD does**
+- Builds the two Docker targets:
+  - **Step 1 image:** `check-ip`
+  - **Step 2 image:** `check-ip-batch`
+- Pushes them to Docker Hub as:
+  - `hadiserhan/check-ip:latest`
+  - `hadiserhan/check-ip-batch:latest`
+
+> CD requires GitHub Secrets for Docker Hub auth (e.g., `DOCKERHUB_USERNAME` + `DOCKERHUB_TOKEN`).
 
 
 ## Docker
 
+> Prerequisite: Install Docker from the official download page: https://docs.docker.com/get-docker/
+
 A single multi-stage `Dockerfile` builds **two images** (one per step) using build targets.
 
-### Build
+You can either **pull pre-built images from Docker Hub** or **build locally**.
+
+### Option A — Pull from Docker Hub
+> Use this if you just want to run the tools without cloning/building.
+
+Pull latest images:
+```bash
+docker pull hadiserhan/check-ip:latest
+docker pull hadiserhan/check-ip-batch:latest
+```
+
+### Run (Step 1)
+### Linux/macOS
+```bash
+docker run --rm \
+  -e ABUSEIPDB_API_KEY="your-key" \
+  -e IP_ADDRESS="118.25.6.39" \
+  -e CONFIDENCE_THRESHOLD="50" \
+  hadiserhan/check-ip:latest
+```
+
+### Windows (PowerShell)
+```bash
+docker run --rm `
+  -e ABUSEIPDB_API_KEY="your-key" `
+  -e IP_ADDRESS="118.25.6.39" `
+  -e CONFIDENCE_THRESHOLD="50" `
+  hadiserhan/check-ip:latest
+```
+
+### Run (Step 2)
+### Linux/macOS
+```bash
+docker run --rm \
+  -e ABUSEIPDB_API_KEY="your-key" \
+  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" \
+  -e CONFIDENCE_THRESHOLD="50" \
+  hadiserhan/check-ip-batch:latest
+```
+
+### Windows (PowerShell)
+```bash
+docker run --rm `
+  -e ABUSEIPDB_API_KEY="your-key" `
+  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" `
+  -e CONFIDENCE_THRESHOLD="50" `
+  hadiserhan/check-ip-batch:latest
+```
+
+### Option B — Build locally
+Build:
 ```bash
 docker build --target check-ip -t check-ip .
 docker build --target check-ip-batch -t check-ip-batch .
 ```
 
 ### Run (Step 1)
+### Linux/macOS
 ```bash
 docker run --rm \
   -e ABUSEIPDB_API_KEY="your-key" \
@@ -214,7 +280,17 @@ docker run --rm \
   check-ip
 ```
 
+### Windows (PowerShell)
+```bash
+docker run --rm `
+  -e ABUSEIPDB_API_KEY="your-key" `
+  -e IP_ADDRESS="118.25.6.39" `
+  -e CONFIDENCE_THRESHOLD="50" `
+  check-ip
+```
+
 ### Run (Step 2)
+### Linux/macOS
 ```bash
 docker run --rm \
   -e ABUSEIPDB_API_KEY="your-key" \
@@ -223,7 +299,14 @@ docker run --rm \
   check-ip-batch
 ```
 
-> Note: in CI smoke tests, a missing API key is expected to exit with code `2`. We use `set +e` / `set -e` so the job can keep going while still validating the JSON output.
+### Windows (PowerShell)
+```bash
+docker run --rm `
+  -e ABUSEIPDB_API_KEY="your-key" `
+  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" `
+  -e CONFIDENCE_THRESHOLD="50" `
+  check-ip-batch
+```
 
 ---
 
@@ -234,7 +317,7 @@ common/            Shared API client + normalization helpers
 check_ip/          Step 1 CLI entrypoint (single IP)
 check_ip_batch/    Step 2 CLI entrypoint (batch)
 tests/             Pytest suite (mocks HTTP calls; checks output JSON)
-.github/workflows/ CI (tests + coverage + Docker build + smoke tests)
+.github/workflows/ CI (tests + coverage + Docker build + smoke tests) + CD (push images to Docker Hub)
 Dockerfile         Multi-stage build (one target per step)
 ```
 
