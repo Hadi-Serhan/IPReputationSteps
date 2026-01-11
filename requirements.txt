@@ -2,3 +2,4 @@ typer
 requests
 pytest
 pytest-cov
+allure-pytest
