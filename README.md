@@ -8,7 +8,227 @@ Two production-style CLI “steps” that query **AbuseIPDB** and print **normal
 The tools are designed to run the same way locally, in CI, and inside Docker containers (inputs via env vars, output via stdout).
 
 ---
+>Prerequisites
+* Git installed
+* Python 3.12+ (recommended)
+* Optional: Docker
+---
+## Choose your setup
 
+- [Linux/macOS — Run locally](#quickstart-linuxmacos---locally)
+- [Linux/macOS — Run with Docker](#quickstart-linuxmacos---docker)
+- [Windows PowerShell — Run locally](#quickstart-windows-powershell---locally)
+- [Windows PowerShell — Run with Docker](#quickstart-windows-powershell---docker)
+- [Information](#what-each-step-does)
+---
+## Quickstart (Linux/macOS) - Locally
+
+### 1) Clone the repo
+Open a terminal, then run:
+
+```bash
+git clone https://github.com/hadiserhan/IPReputationSteps.git
+cd IPReputationSteps
+```
+
+### 2) Create and activate a virtual environment
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 3) Set up your environment variables
+> You need an AbuseIPDB API key from your AbuseIPDB account.
+```bash
+export ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE"
+
+# Optional (default value is 70)
+export CONFIDENCE_THRESHOLD="50" 
+```
+
+### 4) Run Step 1 (Single IP)
+```bash
+export IP_ADDRESS="8.8.8.8"
+python -m check_ip.main
+```
+
+### 5) Run Step 2 (Batch)
+```bash
+export IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1"
+python -m check_ip_batch.main
+```
+
+### 6) Testing + Coverage
+Run:
+```bash
+pytest -q --cov=check_ip --cov=check_ip_batch --cov=common --cov-report=term-missing --cov-fail-under=90
+```
+---
+### Quickstart (Linux/macOS) - Docker
+> Prerequisite: Install Docker from the official download page: https://docs.docker.com/get-docker/
+
+### Option A - Pull from Docker Hub
+```bash
+docker pull hadiserhan/check-ip:latest
+docker pull hadiserhan/check-ip-batch:latest
+```
+
+### Run Step 1 (Single IP)
+```bash
+docker run --rm \
+  -e ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE" \
+  -e IP_ADDRESS="8.8.8.8" \
+  -e CONFIDENCE_THRESHOLD="50" \
+  hadiserhan/check-ip:latest
+```
+
+### Run Step 2 (Batch)
+```bash
+docker run --rm \
+  -e ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE" \
+  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" \
+  -e CONFIDENCE_THRESHOLD="50" \
+  hadiserhan/check-ip-batch:latest
+```
+---
+### Option B - Build the images locally
+### 1) Clone the repo
+Open a terminal, then run:
+
+```bash
+git clone https://github.com/hadiserhan/IPReputationSteps.git
+cd IPReputationSteps
+```
+
+```bash
+docker build --target check-ip -t check-ip .
+docker build --target check-ip-batch -t check-ip-batch .
+```
+
+### Run Step 1 (Single IP)
+```bash
+docker run --rm \
+  -e ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE" \
+  -e IP_ADDRESS="118.25.6.39" \
+  -e CONFIDENCE_THRESHOLD="50" \
+  check-ip
+```
+
+### Run Step 2 (Batch)
+```bash
+docker run --rm \
+  -e ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE" \
+  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" \
+  -e CONFIDENCE_THRESHOLD="50" \
+  check-ip-batch
+```
+---
+## Quickstart (Windows PowerShell) - Locally
+
+### 1) Clone the repo
+Open a terminal, then run:
+
+```bash
+git clone https://github.com/hadiserhan/IPReputationSteps.git
+cd IPReputationSteps
+```
+
+### 2) Create and activate a virtual environment
+```bash
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 3) Set up your environment variables
+> You need an AbuseIPDB API key from your AbuseIPDB account.
+```bash
+$env:ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE"
+
+# Optional (default value is 70)
+$env:CONFIDENCE_THRESHOLD="50"
+```
+
+### 4) Run Step 1 (Single IP)
+```bash
+$env:IP_ADDRESS="8.8.8.8"
+python -m check_ip.main
+```
+
+### 5) Run Step 2 (Batch)
+```bash
+$env:IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1"
+python -m check_ip_batch.main
+```
+
+### 6) Testing + Coverage
+Run:
+```bash
+pytest -q --cov=check_ip --cov=check_ip_batch --cov=common --cov-report=term-missing --cov-fail-under=90
+```
+---
+### Quickstart (Windows PowerShell) - Docker
+> Prerequisite: Install Docker from the official download page: https://docs.docker.com/get-docker/
+
+### Option A - Pull from Docker Hub
+```bash
+docker pull hadiserhan/check-ip:latest
+docker pull hadiserhan/check-ip-batch:latest
+```
+
+### Run Step 1 (Single IP)
+```bash
+docker run --rm `
+  -e ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE" `
+  -e IP_ADDRESS="8.8.8.8" `
+  -e CONFIDENCE_THRESHOLD="50" `
+  hadiserhan/check-ip:latest
+```
+
+### Run Step 2 (Batch)
+```bash
+docker run --rm `
+  -e ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE" `
+  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" `
+  -e CONFIDENCE_THRESHOLD="50" `
+  hadiserhan/check-ip-batch:latest
+```
+---
+### Option B - Build the images locally
+### 1) Clone the repo
+Open a terminal, then run:
+
+```bash
+git clone https://github.com/hadiserhan/IPReputationSteps.git
+cd IPReputationSteps
+```
+
+```bash
+docker build --target check-ip -t check-ip .
+docker build --target check-ip-batch -t check-ip-batch .
+```
+
+### Run Step 1 (Single IP)
+```bash
+docker run --rm `
+  -e ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE" `
+  -e IP_ADDRESS="118.25.6.39" `
+  -e CONFIDENCE_THRESHOLD="50" `
+  check-ip
+```
+
+### Run Step 2 (Batch)
+```bash
+docker run --rm `
+  -e ABUSEIPDB_API_KEY="PASTE_YOUR_KEY_HERE" `
+  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" `
+  -e CONFIDENCE_THRESHOLD="50" `
+  check-ip-batch
+```
+---
 ## What each step does
 
 ### Step 1 — Single IP check (`check_ip`)
@@ -126,59 +346,9 @@ Let `score = abuse_confidence_score`:
 
 ---
 
-## Running locally
-
-### Linux / macOS
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-export ABUSEIPDB_API_KEY="your-key"
-export CONFIDENCE_THRESHOLD="50"
-
-# Step 1
-export IP_ADDRESS="118.25.6.39"
-python -m check_ip.main
-
-# Step 2
-export IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1"
-python -m check_ip_batch.main
-```
-
-### Windows (PowerShell)
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-
-$env:ABUSEIPDB_API_KEY="your-key"
-$env:CONFIDENCE_THRESHOLD="50"
-
-# Step 1
-$env:IP_ADDRESS="118.25.6.39"
-python -m check_ip.main
-
-# Step 2
-$env:IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1"
-python -m check_ip_batch.main
-```
-
----
-
 ## Testing + coverage
 
 Tests are written with **pytest** and use Typer’s `CliRunner` to exercise the CLI end-to-end while mocking HTTP calls.
-
-Run all tests with coverage:
-```bash
-pytest -q --cov=check_ip --cov=check_ip_batch --cov=common --cov-report=term-missing --cov-fail-under=90
-```
-
-Run just one module’s tests:
-```bash
-pytest -q tests/test_check_ip_batch.py --cov=check_ip_batch --cov-report=term-missing
-```
 
 Tests validate the end-to-end CLI output (exit codes + JSON structure) while mocking HTTP requests. A coverage gate (≥90%) helps ensure the main paths—input validation, API failures, and partial-success aggregation—remain tested as the code evolves.
 
@@ -206,107 +376,6 @@ We also have a **CD workflow** that publishes Docker images to **Docker Hub** on
   - `hadiserhan/check-ip-batch:latest`
 
 > CD requires GitHub Secrets for Docker Hub auth (e.g., `DOCKERHUB_USERNAME` + `DOCKERHUB_TOKEN`).
-
-
-## Docker
-
-> Prerequisite: Install Docker from the official download page: https://docs.docker.com/get-docker/
-
-A single multi-stage `Dockerfile` builds **two images** (one per step) using build targets.
-
-You can either **pull pre-built images from Docker Hub** or **build locally**.
-
-### Option A — Pull from Docker Hub
-> Use this if you just want to run the tools without cloning/building.
-
-Pull latest images:
-```bash
-docker pull hadiserhan/check-ip:latest
-docker pull hadiserhan/check-ip-batch:latest
-```
-
-### Run (Step 1)
-### Linux/macOS
-```bash
-docker run --rm \
-  -e ABUSEIPDB_API_KEY="your-key" \
-  -e IP_ADDRESS="118.25.6.39" \
-  -e CONFIDENCE_THRESHOLD="50" \
-  hadiserhan/check-ip:latest
-```
-
-### Windows (PowerShell)
-```bash
-docker run --rm `
-  -e ABUSEIPDB_API_KEY="your-key" `
-  -e IP_ADDRESS="118.25.6.39" `
-  -e CONFIDENCE_THRESHOLD="50" `
-  hadiserhan/check-ip:latest
-```
-
-### Run (Step 2)
-### Linux/macOS
-```bash
-docker run --rm \
-  -e ABUSEIPDB_API_KEY="your-key" \
-  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" \
-  -e CONFIDENCE_THRESHOLD="50" \
-  hadiserhan/check-ip-batch:latest
-```
-
-### Windows (PowerShell)
-```bash
-docker run --rm `
-  -e ABUSEIPDB_API_KEY="your-key" `
-  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" `
-  -e CONFIDENCE_THRESHOLD="50" `
-  hadiserhan/check-ip-batch:latest
-```
-
-### Option B — Build locally
-Build:
-```bash
-docker build --target check-ip -t check-ip .
-docker build --target check-ip-batch -t check-ip-batch .
-```
-
-### Run (Step 1)
-### Linux/macOS
-```bash
-docker run --rm \
-  -e ABUSEIPDB_API_KEY="your-key" \
-  -e IP_ADDRESS="118.25.6.39" \
-  -e CONFIDENCE_THRESHOLD="50" \
-  check-ip
-```
-
-### Windows (PowerShell)
-```bash
-docker run --rm `
-  -e ABUSEIPDB_API_KEY="your-key" `
-  -e IP_ADDRESS="118.25.6.39" `
-  -e CONFIDENCE_THRESHOLD="50" `
-  check-ip
-```
-
-### Run (Step 2)
-### Linux/macOS
-```bash
-docker run --rm \
-  -e ABUSEIPDB_API_KEY="your-key" \
-  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" \
-  -e CONFIDENCE_THRESHOLD="50" \
-  check-ip-batch
-```
-
-### Windows (PowerShell)
-```bash
-docker run --rm `
-  -e ABUSEIPDB_API_KEY="your-key" `
-  -e IP_ADDRESSES="118.25.6.39,8.8.8.8,invalid-ip,1.1.1.1" `
-  -e CONFIDENCE_THRESHOLD="50" `
-  check-ip-batch
-```
 
 ---
 
