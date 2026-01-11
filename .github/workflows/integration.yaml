@@ -1,0 +1,37 @@
+  integration:
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build check-ip
+        run: docker build --target check-ip -t check-ip .
+
+      - name: Build check-ip-batch
+        run: docker build --target check-ip-batch -t check-ip-batch .
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Live API check (single)
+        run: |
+          out=$(docker run --rm \
+            -e ABUSEIPDB_API_KEY="${{ secrets.ABUSEIPDB_API_KEY }}" \
+            -e IP_ADDRESS="8.8.8.8" \
+            -e CONFIDENCE_THRESHOLD="50" \
+            check-ip)
+          echo "$out" | jq .
+          test "$(echo "$out" | jq -r '.step_status.code')" -eq 0
+
+      - name: Live API check (batch)
+        run: |
+          out=$(docker run --rm \
+            -e ABUSEIPDB_API_KEY="${{ secrets.ABUSEIPDB_API_KEY }}" \
+            -e IP_ADDRESSES="8.8.8.8,1.1.1.1" \
+            -e CONFIDENCE_THRESHOLD="50" \
+            check-ip-batch)
+          echo "$out" | jq .
+          test "$(echo "$out" | jq -r '.step_status.code')" -eq 0

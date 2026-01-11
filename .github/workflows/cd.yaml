@@ -1,16 +1,21 @@
 name: CD (Publish Docker images)
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
     branches: ["main"]
+    types: [completed]
 
 jobs:
   docker-publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head.ref }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -23,6 +28,7 @@ jobs:
 
       - name: Build + push check-ip
         run: |
+          SHA=${{ github.event.workflow_run.head_sha }}
           docker buildx build \
             --target check-ip \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/check-ip:latest \
@@ -31,6 +37,7 @@ jobs:
 
       - name: Build + push check-ip-batch
         run: |
+          SHA=${{ github.event.workflow_run.head_sha }}
           docker buildx build \
             --target check-ip-batch \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/check-ip-batch:latest \
