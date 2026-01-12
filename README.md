@@ -8,7 +8,7 @@ Two production-style CLI “steps” that query **AbuseIPDB** and print **normal
 The tools are designed to run the same way locally, in CI, and inside Docker containers (inputs via env vars, output via stdout).
 
 ---
->Prerequisites
+> Prerequisites
 * Git installed
 * Python 3.12+ (recommended)
 * Optional: Docker
@@ -27,7 +27,7 @@ The tools are designed to run the same way locally, in CI, and inside Docker con
 Open a terminal, then run:
 
 ```bash
-git clone https://github.com/hadiserhan/IPReputationSteps.git
+git clone https://github.com/Hadi-Serhan/IPReputationSteps.git
 cd IPReputationSteps
 ```
 
@@ -98,7 +98,7 @@ docker run --rm \
 Open a terminal, then run:
 
 ```bash
-git clone https://github.com/hadiserhan/IPReputationSteps.git
+git clone https://github.com/Hadi-Serhan/IPReputationSteps.git
 cd IPReputationSteps
 ```
 
@@ -131,7 +131,7 @@ docker run --rm \
 Open a terminal, then run:
 
 ```bash
-git clone https://github.com/hadiserhan/IPReputationSteps.git
+git clone https://github.com/Hadi-Serhan/IPReputationSteps.git
 cd IPReputationSteps
 ```
 
@@ -202,7 +202,7 @@ docker run --rm `
 Open a terminal, then run:
 
 ```bash
-git clone https://github.com/hadiserhan/IPReputationSteps.git
+git clone https://github.com/Hadi-Serhan/IPReputationSteps.git
 cd IPReputationSteps
 ```
 
@@ -363,13 +363,30 @@ On every push and pull request, the workflow:
 
 >The smoke tests run **without an API key** to avoid real network calls, so the containers are expected to exit with code `2`. We use `set +e` / `set -e` so the job can continue while still validating the JSON output.
 
+
+### Test reports (Allure)
+
+CI generates an **Allure report** from the pytest run.
+
+- The raw results are uploaded as a workflow artifact: `allure-results`
+- On pushes to `main`, the HTML report is generated and published to **GitHub Pages** (see the Pages link in the workflow run)
+
+---
+### Integration test (real AbuseIPDB API)
+
+In addition to unit tests (mocked HTTP), there is an **integration workflow** that runs a real container call against the AbuseIPDB API.
+
+- Runs **only on pushes to `main`**
+- Uses the repository secret `ABUSEIPDB_API_KEY`
+- Validates that the built Docker image can successfully call the real endpoint
+---
 ## CD (Docker image publishing)
 
-We also have a **CD workflow** that publishes Docker images to **Docker Hub** on pushes to `main`.
+We also have a **CD workflow** that publishes Docker images to **Docker Hub** on pushes to `main` only if the CI workflow passes.
 
 **What CD does**
 - Builds the two Docker targets:
-  - **Step 1 image:** `check-ip`
+  - **Step 1 image:** `check-ip```
   - **Step 2 image:** `check-ip-batch`
 - Pushes them to Docker Hub as:
   - `hadiserhan/check-ip:latest`
@@ -386,7 +403,7 @@ common/            Shared API client + normalization helpers
 check_ip/          Step 1 CLI entrypoint (single IP)
 check_ip_batch/    Step 2 CLI entrypoint (batch)
 tests/             Pytest suite (mocks HTTP calls; checks output JSON)
-.github/workflows/ CI (tests + coverage + Docker build + smoke tests) + CD (push images to Docker Hub)
+.github/workflows/ CI (tests + coverage + Docker build + smoke tests) + CD (push images to Docker Hub) + Integeration (Live API)
 Dockerfile         Multi-stage build (one target per step)
 ```
 
