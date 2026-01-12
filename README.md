@@ -386,7 +386,7 @@ We also have a **CD workflow** that publishes Docker images to **Docker Hub** on
 
 **What CD does**
 - Builds the two Docker targets:
-  - **Step 1 image:** `check-ip```
+  - **Step 1 image:** `check-ip`
   - **Step 2 image:** `check-ip-batch`
 - Pushes them to Docker Hub as:
   - `hadiserhan/check-ip:latest`
