@@ -47,11 +47,23 @@ def ip_check_batch(IP_ADDRESSES: Optional[str] = typer.Option(None, envvar="IP_A
     typer.echo(json.dumps(build_output(code, msg, api_object), indent=2))
     raise typer.Exit(code=code)
 
-# IPs are comma-separated
+# IPs are comma-separated + de-duping
 def split_ips(raw):
     parts = [p.strip() for p in raw.split(",")] if raw else []
-    return [p for p in parts if p != ""]
+    
+    seen: set[str] = set()
+    unique: list[str] = []
 
+    for p in parts:
+        if not p:   # Skipping empty entries
+            continue
+        if p in seen: # Skipping dupes
+            continue
+        seen.add(p)
+        unique.append(p)
+    
+    return unique
+    
 # Validate IP address
 def is_valid_ip(ip):
     try:

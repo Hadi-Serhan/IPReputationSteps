@@ -43,7 +43,8 @@ def test_no_valid_ips_returns_code_1(monkeypatch):
     assert out["api_object"]["summary"]["failed"] == 2
     assert out["api_object"]["results"] == {}
     assert "invalid-ip" in out["api_object"]["errors"]
-    
+
+
 def test_all_api_requests_fail_returns_code_2(monkeypatch):
     monkeypatch.setenv("ABUSEIPDB_API_KEY", "dummy")
     monkeypatch.setenv("IP_ADDRESSES", "8.8.8.8,1.1.1.1")
@@ -124,3 +125,37 @@ def test_success_all_ips_ok(monkeypatch):
     assert out["api_object"]["summary"]["successful"] == 2
     assert out["api_object"]["summary"]["failed"] == 0
     assert out["api_object"]["summary"]["risk_counts"]["HIGH"] == 1
+    
+def test_duplicate_ips_handling_success(monkeypatch):
+    monkeypatch.setenv("ABUSEIPDB_API_KEY", "dummy")
+    monkeypatch.setenv("IP_ADDRESSES", "8.8.8.8,8.8.8.8,1.1.1.1")
+    monkeypatch.setenv("CONFIDENCE_THRESHOLD", "50")
+    
+    calls = []
+
+    def fake_fetch(ip, api_key, *args, **kwargs):
+        calls.append(ip)
+        return {
+            "ipAddress": ip,
+            "abuseConfidenceScore": 0,
+            "totalReports": 10,
+            "countryCode": "US",
+            "isp": "Example ISP",
+        }
+    monkeypatch.setattr(batch_main, "fetch_check_data", fake_fetch)
+    result = runner.invoke(app, [])
+    out = parse_json_stdout(result)
+
+    assert result.exit_code == 0
+    assert out["step_status"]["code"] == 0
+    assert out["step_status"]["message"] == "success"
+
+    assert out["api_object"]["summary"]["total"] == 2
+    assert out["api_object"]["summary"]["successful"] == 2
+    assert out["api_object"]["summary"]["failed"] == 0
+
+    assert "8.8.8.8" in out["api_object"]["results"]
+    assert "1.1.1.1" in out["api_object"]["results"]
+
+    # proves dedupe (only two calls)
+    assert calls == ["8.8.8.8", "1.1.1.1"]
